@@ -63,3 +63,12 @@ def confirm_bt():
     return create_confirm_kb
 
 
+def get_group_kb():
+    list_of_groups = ["Группа alfa", "Группа beta", "Группа omega"]
+    keyboard = [
+        [
+            InlineKeyboardButton(text=group, callback_data=group) for group in list_of_groups
+        ],
+    ]
+    create_confirm_kb = InlineKeyboardMarkup(inline_keyboard=keyboard)
+    return create_confirm_kb

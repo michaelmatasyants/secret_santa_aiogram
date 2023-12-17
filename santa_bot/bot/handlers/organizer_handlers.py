@@ -5,7 +5,7 @@ from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import CallbackQuery, Message
 
-from santa_bot.bot.keyboards import price_kb
+from santa_bot.bot.keyboards import price_kb, get_group_kb
 from santa_bot.bot.LEXICON import LEXICON
 
 storage = MemoryStorage()
@@ -19,6 +19,12 @@ class FSMFillForm(StatesGroup):
     choose_price = State()
     get_link = State()
 
+
+class FSMAdminForm(StatesGroup):
+    admin_group = State()
+    group_information = State()
+    group_confirm = State()
+    send_wishlist = State()
 
 # выход из машины состояний
 @router.message(Command(commands='cancel'), StateFilter(default_state))
@@ -83,9 +89,11 @@ async def get_link(message: Message, state: FSMContext):
 
 
 # Ветка управления группами
-@router.message(F.text == LEXICON['admin_groups'])
-async def admin_group_info(message: Message):
-    pass
+@router.message(StateFilter(FSMAdminForm.admin_group))
+async def admin_group_info(message: Message, state: FSMContext):#ДОБАВИТЬ ГРУППЫ ИЗ БД
+    text_message = LEXICON['your_groups']
+    await message.answer(text=text_message, reply_markup=get_group_kb())
+    await state.set_state(FSMAdminForm.group_information)
 
     # text_message = "Вы админ в следующих группах:"
     # await  message.answer(text=text_message, reply_markup= # ДОПИШИ ФУНКЦИЮ)

@@ -21,3 +21,14 @@ def start_info_kb():
     create_inline = InlineKeyboardMarkup(inline_keyboard=[[start_kb]])
 
     return create_inline
+
+
+def price_kb():
+    keyboard = [
+        [InlineKeyboardButton(text=LEXICON['price_1'], callback_data="price#1")],
+        [InlineKeyboardButton(text=LEXICON['price_2'], callback_data="price#2")],
+        [InlineKeyboardButton(text=LEXICON['price_3'], callback_data="price#3")],
+    ]
+    create_price_kb = InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+    return create_price_kb

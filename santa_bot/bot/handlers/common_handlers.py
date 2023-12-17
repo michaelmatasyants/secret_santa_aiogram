@@ -20,6 +20,7 @@ async def start_command(message: Message):
     text_message = "Привет, я бот-повелитель Тайных Сант. Больше всего на свете я люблю друзей и подарки 🎁"
     await message.answer(text=text_message, reply_markup=create_inline_kb())
 
+
 @router.callback_query(F.data == LEXICON['ready'])
 async def get_ready(callback: CallbackQuery):
     text_message = "С моей помощью ты можешь создать группу и организовать Тайного Санту с друзьями или семьей " \

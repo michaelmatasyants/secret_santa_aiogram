@@ -1,13 +1,12 @@
-import asyncio
-
-from aiogram import Router, F
-from aiogram.filters import StateFilter, CommandStart, Command
-from aiogram.types import Message, CallbackQuery
+from aiogram import F, Router
+from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import default_state, State, StatesGroup
+from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import Message
+
 from santa_bot.bot.keyboards import price_kb
-from santa_bot.bot.LEXICON import *
+from santa_bot.bot.LEXICON import LEXICON
 
 storage = MemoryStorage()
 router = Router()
@@ -41,14 +40,6 @@ async def process_cancel_command_state(message: Message, state: FSMContext):
 
 # Ветка создания групп
 @router.message(Command(commands=['newgroup']), StateFilter(default_state))
-async def get_ready(message: Message, state: FSMContext):
-    text_message = "Самое время создать новую группу, куда ты можешь пригласить своих друзей, коллег или " \
-                   "родственников\n\n" \
-                   "Давай выберем забавное имя для новой группы!"
-    await message.answer(text=text_message)
-    await state.set_state(FSMFillForm.name_group)
-
-
 @router.message(F.text == LEXICON['create_group'], StateFilter(default_state))
 async def get_ready(message: Message, state: FSMContext):
     text_message = "Самое время создать новую группу, куда ты можешь пригласить своих друзей, коллег или " \

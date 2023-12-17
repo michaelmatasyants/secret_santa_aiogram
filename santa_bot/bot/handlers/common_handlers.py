@@ -15,13 +15,8 @@ os.environ['DJANGO_ALLOW_ASYNC_UNSAFE'] = 'True'
 router = Router()
 
 
-@router.message(CommandStart())
-async def start_command(message: Message):
-    await message.answer(text=LEXICON['greeting'],
-                         reply_markup=create_inline_kb())
-
-
 @router.message(Command('restart'))
+@router.message(CommandStart())
 async def start_command(message: Message):
     await message.answer(text=LEXICON['greeting'],
                          reply_markup=create_inline_kb())
@@ -60,3 +55,8 @@ async def show_my_groups(message: Message):
             reply_markup=kb_builder.as_markup(resize_keyboard=True))
     else:
         await message.answer(LEXICON['no_groups'])
+
+
+
+# async def display_group_details(callback: CallbackQuery):
+#    pass

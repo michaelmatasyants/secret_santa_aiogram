@@ -6,7 +6,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state, State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
-from santa_bot.bot.keyboards import confirm_bt
+from santa_bot.bot.keyboards import confirm_bt, corrections_bt
 from santa_bot.bot.LEXICON import *
 
 storage = MemoryStorage()
@@ -37,11 +37,21 @@ async def process_cancel_command_state(message: Message, state: FSMContext):
     await message.answer(text="Нажми /start для начала работы")
 
 
+@router.callback_query(StateFilter(FSMUserForm.check_data), F.data.in_(['user_rename']))
+async def start_user(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    text_message = LEXICON['game'].format('тест1', 'тест2', 'тест3', 'тест4')
+    await callback.message.answer(text=text_message)
+    await asyncio.sleep(0.5)
+    await callback.message.answer(text=LEXICON['user_name'])
+    await state.set_state(FSMUserForm.user_name)
+
+
 @router.message(Command(commands=['user']), StateFilter(default_state))
 async def start_user(message: Message, state: FSMContext):
     text_message = LEXICON['game'].format('тест1', 'тест2', 'тест3', 'тест4')
     await message.answer(text=text_message)
-    await asyncio.sleep(1)
+    await asyncio.sleep(0.5)
     await message.answer(text=LEXICON['user_name'])
     await state.set_state(FSMUserForm.user_name)
 
@@ -79,7 +89,7 @@ async def get_description_group(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer(text=message_text)
         await callback.answer()
 
-    elif callback.data == LEXICON['mistake']:
-        message_text = LEXICON['not_in_game']
-        await callback.message.answer(text=message_text)
-        await callback.answer()
+    # elif callback.data == LEXICON['mistake']:
+    #     message_text = LEXICON['not_in_game']
+    #     await callback.message.answer(text=message_text, reply_markup=corrections_bt())
+    #     await callback.answer()

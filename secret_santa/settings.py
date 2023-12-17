@@ -92,3 +92,5 @@ STATIC_ROOT = Path(BASE_DIR).joinpath('static')
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+DJANGO_ALLOW_ASYNC_UNSAFE = True

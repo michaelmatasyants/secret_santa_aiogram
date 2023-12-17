@@ -1,10 +1,16 @@
-import asyncio
+import os
 
-from aiogram import Router, F
-from aiogram.filters import CommandStart, Command
-from aiogram.types import Message, CallbackQuery
+from aiogram import F, Router
+from aiogram.filters import Command, CommandStart
+from aiogram.types import CallbackQuery, InlineKeyboardButton, Message
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from asgiref.sync import sync_to_async
+
+from santa_bot.bot.LEXICON import LEXICON
 from santa_bot.bot.keyboards import clients_start_kb, create_inline_kb, start_info_kb
-from santa_bot.bot.LEXICON import *
+from santa_bot.models import Organizer, Player
+
+os.environ['DJANGO_ALLOW_ASYNC_UNSAFE'] = 'True'
 
 router = Router()
 
@@ -40,3 +46,23 @@ async def get_ready(callback: CallbackQuery):
                    "пообщаться, если они захотят уточнить детали или передать привет друг другу."
     await callback.message.answer(text=text_message, reply_markup=clients_start_kb)
     await callback.answer()
+
+
+@router.message(F.text == LEXICON['my_groups'])
+async def show_my_groups(message: Message):
+    player_tg_id = message.chat.id
+    try:
+        players = Player.objects.select_related('game').filter(telegram_id=player_tg_id)
+    except Player.DoesNotExist:
+        await message.answer(LEXICON['no_groups'])
+    if players:
+        kb_builder = InlineKeyboardBuilder()
+        buttons = [InlineKeyboardButton(text=player.game.name,
+                                        callback_data=player.game.name)
+                   for player in players]
+        kb_builder.row(*buttons, width=1)
+        await message.answer(
+            text=LEXICON['player_groups'],
+            reply_markup=kb_builder.as_markup(resize_keyboard=True))
+    else:
+        await message.answer(LEXICON['no_groups'])

@@ -52,24 +52,14 @@ def confirm_bt():
     keyboard = [
         [
             InlineKeyboardButton(text=LEXICON['ok'],
-                                 callback_data=LEXICON['ok'])
+                                 callback_data='data_save')
         ],
         [
             InlineKeyboardButton(text=LEXICON['mistake'],
-                                 callback_data='user_rename')
+                                 callback_data='data_change')
         ],
     ]
     create_confirm_kb = InlineKeyboardMarkup(inline_keyboard=keyboard)
     return create_confirm_kb
 
 
-def corrections_bt():
-    keyboard = [
-        [
-            InlineKeyboardButton(text='Внести изменения',
-                                 callback_data='user_rename')
-        ],
-    ]
-    create_corrections_kb = InlineKeyboardMarkup(inline_keyboard=keyboard)
-
-    return create_corrections_kb

@@ -1,11 +1,12 @@
-from aiogram import Router, F
-from aiogram.filters import StateFilter, Command
-from aiogram.types import Message, CallbackQuery
+from aiogram import F, Router
+from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import default_state, State, StatesGroup
+from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import CallbackQuery, Message
+
 from santa_bot.bot.keyboards import price_kb
-from santa_bot.bot.LEXICON import *
+from santa_bot.bot.LEXICON import LEXICON
 
 storage = MemoryStorage()
 router = Router()

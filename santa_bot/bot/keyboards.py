@@ -46,3 +46,14 @@ def price_kb():
     ]
     price_keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard)
     return price_keyboard
+
+
+def confirm_bt():
+    keyboard = [
+        [InlineKeyboardButton(text=LEXICON['ok'],
+                              callback_data=LEXICON['ok'])],
+        [InlineKeyboardButton(text=LEXICON['mistake'],
+                              callback_data=LEXICON['mistake'])],
+    ]
+    create_confirm_kb = InlineKeyboardMarkup(inline_keyboard=keyboard)
+    return create_confirm_kb

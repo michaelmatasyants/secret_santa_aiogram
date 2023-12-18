@@ -38,7 +38,7 @@ async def process_cancel_command_state(message: Message, state: FSMContext):
     await message.answer(text="Нажми /start для начала работы")
 
 
-@router.callback_query(StateFilter(FSMUserForm.check_data), F.data.in_(['data_change',]))
+@router.callback_query(StateFilter(FSMUserForm.check_data), F.data.in_(['data_change']))
 async def start_user(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(text=LEXICON['user_name'])
     await state.set_state(FSMUserForm.user_name)
@@ -79,7 +79,7 @@ async def get_check(message: Message, state: FSMContext):
     await state.set_state(FSMUserForm.check_data)
 
 
-@router.callback_query(StateFilter(FSMUserForm.check_data), F.data.in_(['data_save',]))
+@router.callback_query(StateFilter(FSMUserForm.check_data), F.data.in_(['data_save']))
 async def get_decision(callback: CallbackQuery, state: FSMContext):
     message_text = LEXICON['in_game'].format('Game from BD')
     await callback.message.answer(text=message_text)

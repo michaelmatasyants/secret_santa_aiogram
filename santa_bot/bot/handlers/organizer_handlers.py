@@ -4,7 +4,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import CallbackQuery, Message
-from aiogram.utils.deep_linking import create_telegram_link
+from aiogram.utils.deep_linking import create_start_link
+from aiogram.utils.markdown import link
+from aiogram import Bot
+from django.conf import settings
 
 from pathlib import Path
 from santa_bot.bot.keyboards import price_kb, get_group_kb
@@ -12,11 +15,13 @@ from santa_bot.bot.LEXICON import LEXICON
 
 storage = MemoryStorage()
 router = Router()
+bot = Bot(settings.TELEGRAM_TOKEN)
 
 
 class FSMFillForm(StatesGroup):
     name_group = State()
     description_group = State()
+    game_date = State()
     choose_date = State()
     choose_price = State()
     get_link = State()
@@ -59,9 +64,9 @@ async def get_ready(message: Message, state: FSMContext):
 
 @router.message(StateFilter(FSMFillForm.name_group))
 async def get_description_group(message: Message, state: FSMContext):
-    await state.update_data(group_name=message.text)
+    await state.update_data(name_group=message.text)
     message_text = "Классное название!\n\n" \
-                   "А теперь напиши мне короткое  описание вашей группы. Его будут видеть участники при регистрации и на странице группы."
+                   "А теперь напиши мне короткое описание вашей группы. Его будут видеть участники при регистрации и на странице группы."
     await message.answer(text=message_text)
     await state.set_state(FSMFillForm.description_group)
 
@@ -69,6 +74,15 @@ async def get_description_group(message: Message, state: FSMContext):
 @router.message(StateFilter(FSMFillForm.description_group))
 async def get_date(message: Message, state: FSMContext):
     await state.update_data(description_group=message.text)
+    message_text = "А когда все узнают своих подопечных?\n\n" \
+                   "Пора указать дату."
+    await message.answer(message_text)
+    await state.set_state(FSMFillForm.game_date)
+
+
+@router.message(StateFilter(FSMFillForm.game_date))
+async def get_date(message: Message, state: FSMContext):
+    await state.update_data(game_date=message.text)
     message_text = "Теперь все понятно!\n\n" \
                    "Пора указать дату и время проведения розыгрыша, чтобы бот уведомил участников."
     await message.answer(message_text)
@@ -87,11 +101,12 @@ async def get_date(message: Message, state: FSMContext):
 @router.callback_query(StateFilter(FSMFillForm.get_link), F.data.in_(['price_1', 'price_2', 'price_3']))
 async def get_link(callback: CallbackQuery, state: FSMContext):
     await state.update_data(choose_price=LEXICON[callback.data])
-    text_message = LEXICON[callback.data]
-    await callback.message.answer(text=text_message)
+    link = await create_start_link(bot=bot, payload='123')
+    await state.update_data(get_link=link)
+    await callback.message.answer(text=link)
     await callback.answer()
-    link = create_telegram_link(Path('td_bot'), {'wer': '123'})
-    print(link)
+    await state.clear()
+    #print(link)
     # await state.clear() #выход из состояний
 
 

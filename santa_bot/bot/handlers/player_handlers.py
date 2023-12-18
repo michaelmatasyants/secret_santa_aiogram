@@ -1,13 +1,14 @@
 import asyncio
 
-from aiogram import Router, F
-from aiogram.filters import StateFilter, CommandStart, Command
-from aiogram.types import Message, CallbackQuery
+from aiogram import F, Router
+from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import default_state, State, StatesGroup
+from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import CallbackQuery, Message
+
 from santa_bot.bot.keyboards import confirm_bt
-from santa_bot.bot.LEXICON import *
+from santa_bot.bot.LEXICON import LEXICON
 
 storage = MemoryStorage()
 router = Router()
@@ -72,7 +73,8 @@ async def get_description_group(message: Message, state: FSMContext):
     await state.set_state(FSMUserForm.check_data)
 
 
-@router.callback_query(StateFilter(FSMUserForm.check_data), F.data.in_([LEXICON['ok'], LEXICON['mistake']]))
+@router.callback_query(StateFilter(FSMUserForm.check_data),
+                       F.data.in_([LEXICON['ok'], LEXICON['mistake']]))
 async def get_description_group(callback: CallbackQuery, state: FSMContext):
     if callback.data == LEXICON['ok']:
         message_text = LEXICON['in_game'].format('Game from BD')

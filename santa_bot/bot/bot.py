@@ -10,7 +10,9 @@ async def main():
     bot = Bot(settings.TELEGRAM_TOKEN)
     dp = Dispatcher()
 
-    dp.include_routers(common_handlers.router, organizer_handlers.router, player_handlers.router)
+    dp.include_routers(common_handlers.router,
+                       organizer_handlers.router,
+                       player_handlers.router)
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)

@@ -9,6 +9,8 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from santa_bot.bot.keyboards import confirm_bt
 from santa_bot.bot.LEXICON import *
 
+from santa_bot.models import Game, Player
+
 storage = MemoryStorage()
 router = Router()
 
@@ -18,6 +20,7 @@ class FSMUserForm(StatesGroup):
     email = State()
     wishlist = State()
     check_data = State()
+    game = State()
 
 
 @router.message(Command(commands='cancel'), StateFilter(default_state))
@@ -39,7 +42,19 @@ async def process_cancel_command_state(message: Message, state: FSMContext):
 
 @router.message(Command(commands=['user']), StateFilter(default_state))
 async def start_user(message: Message, state: FSMContext):
-    text_message = LEXICON['game'].format('тест1', 'тест2', 'тест3', 'тест4')
+    try:
+        game_id = int(message.text.split(" ")[-1])
+    except ValueError as e:
+        await message.answer("неверный аргумент команды")
+        raise e
+
+    try:
+        game = Game.objects.get(id=game_id)
+        await state.update_data(game=game)
+    except Game.DoesNotExist:
+        await message.answer("Нет игры с таким ID")
+
+    text_message = LEXICON['game'].format(game.name, game.start_date, game.end_date, game.description)
     await message.answer(text=text_message)
     await asyncio.sleep(1)
     await message.answer(text=LEXICON['user_name'])
@@ -75,7 +90,16 @@ async def get_description_group(message: Message, state: FSMContext):
 @router.callback_query(StateFilter(FSMUserForm.check_data), F.data.in_([LEXICON['ok'], LEXICON['mistake']]))
 async def get_description_group(callback: CallbackQuery, state: FSMContext):
     if callback.data == LEXICON['ok']:
-        message_text = LEXICON['in_game'].format('Game from BD')
+        answer = await state.get_data()
+        game = answer['game']
+        message_text = LEXICON['in_game'].format(game.end_date)
+        participation = Player.objects.create(
+            telegram_id=callback.from_user.id,
+            game=game,
+            name=answer['user_name'],
+            email=answer['email'],
+            wishlist=answer['wishlist']
+        )
         await callback.message.answer(text=message_text)
         await callback.answer()
 

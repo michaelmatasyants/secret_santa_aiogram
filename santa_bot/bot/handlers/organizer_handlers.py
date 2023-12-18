@@ -103,7 +103,7 @@ async def get_link(callback: CallbackQuery, state: FSMContext):
     await state.update_data(choose_price=LEXICON[callback.data])
     link = await create_start_link(bot=bot, payload='123')
     await state.update_data(get_link=link)
-    await callback.message.answer(text=link)
+    await callback.message.answer(text=f"{LEXICON['link']}\n\n{link}")
     await callback.answer()
     await state.clear()
     #print(link)
@@ -140,14 +140,3 @@ async def start_user(callback: CallbackQuery, state: FSMContext):
                                )
     await callback.message.answer(text=message_text)
     await state.set_state(FSMAdminForm.group_confirm)
-
-    # text_message = "Вы админ в следующих группах:"
-    # await  message.answer(text=text_message, reply_markup= # ДОПИШИ ФУНКЦИЮ)
-
-# @router.message(F.text == LEXICON['create_group'], StateFilter(default_state))
-# async def get_ready(message: Message, state: FSMContext):
-#     text_message = "Самое время создать новую группу, куда ты можешь пригласить своих друзей, коллег или " \
-#                    "родственников\n\n" \
-#                    "Давай выберем забавное имя для новой группы!"
-#     await message.answer(text=text_message)
-#     await state.set_state(FSMFillForm.name_group)

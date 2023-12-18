@@ -84,4 +84,3 @@ async def get_decision(callback: CallbackQuery, state: FSMContext):
     message_text = LEXICON['in_game'].format('Game from BD')
     await callback.message.answer(text=message_text)
     await callback.answer()
-

@@ -8,6 +8,7 @@ from aiogram.utils.deep_linking import create_start_link
 from aiogram.utils.markdown import link
 from aiogram import Bot
 from django.conf import settings
+from django.db.models import Count
 
 from santa_bot.models import Game, Organizer
 
@@ -131,27 +132,16 @@ async def admin_group_info(message: Message, state: FSMContext):
     await state.set_state(FSMAdminForm.group_information)
 
 
-@router.callback_query(StateFilter(FSMAdminForm.group_information), F.data.in_(['group_id#', ]))
+@router.callback_query(StateFilter(FSMAdminForm.group_information), F.data.startswith('group_id#'))
 async def start_user(callback: CallbackQuery, state: FSMContext):
-    print(callback.data)
     group_id = callback.data.split("#")[-1]
-    print(group_id)
+    game = Game.objects.filter(id=group_id).annotate(player_count=Count("players"))[0]
     await state.update_data(group_information=callback.message.text)
-    group_info = {
-        "name": callback.message.text,
-        "description": "Куча текста",
-        "registration_status": "Открыта",
-        "amount_playing_users": 6,
-    }
-    text = "Название группы: {}\n\n" \
-           "Описание:\n{}\n\n" \
-           "Регистрация в группу {}\n\n" \
-           "Количество участников (через annotate) - {}\n"
+    status = "закрыта" if game.players_distributed else "открыта"
+    message_text = f"Название группы: {game.name}\n\n" \
+        f"Описание:\n{game.description}\n\n" \
+        f"Регистрация в группу {status}\n\n" \
+        f"Количество участников: {game.player_count}\n"
 
-    message_text = text.format(group_info['name'],
-                               group_info["description"],
-                               group_info['registration_status'],
-                               group_info['amount_playing_users'],
-                               )
     await callback.message.answer(text=message_text)
     await state.set_state(FSMAdminForm.group_confirm)

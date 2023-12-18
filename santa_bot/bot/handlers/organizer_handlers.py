@@ -9,7 +9,7 @@ from aiogram.utils.markdown import link
 from aiogram import Bot
 from django.conf import settings
 
-from santa_bot.models import Game
+from santa_bot.models import Game, Organizer
 
 from pathlib import Path
 from santa_bot.bot.keyboards import price_kb, get_group_kb
@@ -21,8 +21,8 @@ bot = Bot(settings.TELEGRAM_TOKEN)
 
 
 class FSMFillForm(StatesGroup):
-    name_group = State()
-    description_group = State()
+    group_name = State()
+    group_description = State()
     game_date = State()
     choose_date = State()
     choose_price = State()
@@ -61,21 +61,21 @@ async def get_ready(message: Message, state: FSMContext):
                    "родственников\n\n" \
                    "Давай выберем забавное имя для новой группы!"
     await message.answer(text=text_message)
-    await state.set_state(FSMFillForm.name_group)
+    await state.set_state(FSMFillForm.group_name)
 
 
-@router.message(StateFilter(FSMFillForm.name_group))
+@router.message(StateFilter(FSMFillForm.group_name))
 async def get_description_group(message: Message, state: FSMContext):
-    await state.update_data(name_group=message.text)
+    await state.update_data(group_name=message.text)
     message_text = "Классное название!\n\n" \
                    "А теперь напиши мне короткое описание вашей группы. Его будут видеть участники при регистрации и на странице группы."
     await message.answer(text=message_text)
-    await state.set_state(FSMFillForm.description_group)
+    await state.set_state(FSMFillForm.group_description)
 
 
-@router.message(StateFilter(FSMFillForm.description_group))
+@router.message(StateFilter(FSMFillForm.group_description))
 async def get_game_date(message: Message, state: FSMContext):
-    await state.update_data(description_group=message.text)
+    await state.update_data(group_description=message.text)
     message_text = "А когда все узнают своих подопечных?\n\n" \
                    "Пора указать дату."
     await message.answer(message_text)
@@ -103,20 +103,29 @@ async def get_price(message: Message, state: FSMContext):
 @router.callback_query(StateFilter(FSMFillForm.get_link), F.data.in_(['price_1', 'price_2', 'price_3']))
 async def get_link(callback: CallbackQuery, state: FSMContext):
     await state.update_data(choose_price=LEXICON[callback.data])
-    link = await create_start_link(bot=bot, payload='123')
+    answers = await state.get_data()
+    new_game = Game.objects.create(
+        organizer=Organizer.objects.get_or_create(telegram_id=callback.from_user.id)[0],
+        name=answers['group_name'],
+        description=answers['group_description'],
+        price_limit=answers["choose_price"],
+        end_date=answers['game_date'],
+        send_date=answers['choose_date'],
+    )
+    link = await create_start_link(bot=bot, payload=new_game.id)
+    new_game.link = link
+    new_game.save()
     await state.update_data(get_link=link)
     await callback.message.answer(text=f"{LEXICON['link']}\n\n{link}")
     await callback.answer()
-    await state.clear()
-    #print(link)
-    # await state.clear() #выход из состояний
+    await state.clear()  # выход из состояний
+    print(link)
 
 
 # Ветка управления группами
 @router.message(F.text == LEXICON['admin_groups'], StateFilter(default_state))
 async def admin_group_info(message: Message, state: FSMContext):  # ДОБАВИТЬ ГРУППЫ ИЗ БД
     groups = Game.objects.filter(organizer__telegram_id=message.from_user.id)
-    print(groups)
     text_message = LEXICON['your_groups']
     await message.answer(text=text_message, reply_markup=get_group_kb(groups))
     await state.set_state(FSMAdminForm.group_information)

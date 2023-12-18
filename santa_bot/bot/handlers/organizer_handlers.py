@@ -9,6 +9,8 @@ from aiogram.utils.markdown import link
 from aiogram import Bot
 from django.conf import settings
 
+from santa_bot.models import Game
+
 from pathlib import Path
 from santa_bot.bot.keyboards import price_kb, get_group_kb
 from santa_bot.bot.LEXICON import LEXICON
@@ -72,7 +74,7 @@ async def get_description_group(message: Message, state: FSMContext):
 
 
 @router.message(StateFilter(FSMFillForm.description_group))
-async def get_date(message: Message, state: FSMContext):
+async def get_game_date(message: Message, state: FSMContext):
     await state.update_data(description_group=message.text)
     message_text = "А когда все узнают своих подопечных?\n\n" \
                    "Пора указать дату."
@@ -90,7 +92,7 @@ async def get_date(message: Message, state: FSMContext):
 
 
 @router.message(StateFilter(FSMFillForm.choose_date))
-async def get_date(message: Message, state: FSMContext):
+async def get_price(message: Message, state: FSMContext):
     await state.update_data(choose_date=message.text)
     message_text = "Выбери стоимость подарка"
 
@@ -113,8 +115,10 @@ async def get_link(callback: CallbackQuery, state: FSMContext):
 # Ветка управления группами
 @router.message(F.text == LEXICON['admin_groups'], StateFilter(default_state))
 async def admin_group_info(message: Message, state: FSMContext):  # ДОБАВИТЬ ГРУППЫ ИЗ БД
+    groups = Game.objects.filter(organizer__telegram_id=message.from_user.id)
+    print(groups)
     text_message = LEXICON['your_groups']
-    await message.answer(text=text_message, reply_markup=get_group_kb())
+    await message.answer(text=text_message, reply_markup=get_group_kb(groups))
     await state.set_state(FSMAdminForm.group_information)
 
 

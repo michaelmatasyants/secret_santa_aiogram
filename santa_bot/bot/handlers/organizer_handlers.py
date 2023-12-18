@@ -124,16 +124,18 @@ async def get_link(callback: CallbackQuery, state: FSMContext):
 
 # Ветка управления группами
 @router.message(F.text == LEXICON['admin_groups'], StateFilter(default_state))
-async def admin_group_info(message: Message, state: FSMContext):  # ДОБАВИТЬ ГРУППЫ ИЗ БД
+async def admin_group_info(message: Message, state: FSMContext):
     groups = Game.objects.filter(organizer__telegram_id=message.from_user.id)
     text_message = LEXICON['your_groups']
     await message.answer(text=text_message, reply_markup=get_group_kb(groups))
     await state.set_state(FSMAdminForm.group_information)
 
 
-@router.callback_query(StateFilter(FSMAdminForm.group_information), F.data.in_(['your_groups', ]))
+@router.callback_query(StateFilter(FSMAdminForm.group_information), F.data.in_(['group_id#', ]))
 async def start_user(callback: CallbackQuery, state: FSMContext):
-    print(callback.message.text)
+    print(callback.data)
+    group_id = callback.data.split("#")[-1]
+    print(group_id)
     await state.update_data(group_information=callback.message.text)
     group_info = {
         "name": callback.message.text,

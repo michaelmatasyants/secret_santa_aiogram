@@ -65,7 +65,8 @@ def confirm_bt():
 
 def get_group_kb(groups):
     keyboard = [
-        [InlineKeyboardButton(text=group.name, callback_data='your_groups')] for group in groups
+        [InlineKeyboardButton(text=group.name, callback_data=f'group_id#{group.id}')] for group in groups
     ]
+    print(keyboard)
     create_confirm_kb = InlineKeyboardMarkup(inline_keyboard=keyboard)
     return create_confirm_kb

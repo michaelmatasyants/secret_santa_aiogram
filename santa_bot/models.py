@@ -131,3 +131,4 @@ class Player(models.Model):
     class Meta:
         verbose_name = 'участник'
         verbose_name_plural = 'участники'
+        unique_together = ['telegram_id', 'game']

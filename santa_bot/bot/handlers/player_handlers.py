@@ -61,6 +61,10 @@ async def start_user(message: Message, state: FSMContext):
     except Game.DoesNotExist:
         await message.answer("Нет игры с таким ID")
 
+    if Player.objects.filter(telegram_id=message.from_user.id, game=game).exists():
+        await message.answer("Вы уже зарегистрированы на эту игру")
+        raise
+
     text_message = LEXICON['game'].format(game.name, game.start_date, game.end_date, game.description)
     await message.answer(text=text_message)
     await asyncio.sleep(0.5)

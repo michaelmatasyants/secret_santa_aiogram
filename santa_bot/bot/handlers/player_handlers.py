@@ -20,6 +20,7 @@ class FSMUserForm(StatesGroup):
     email = State()
     wishlist = State()
     check_data = State()
+    data_change = State()
     game = State()
 
 
@@ -40,6 +41,12 @@ async def process_cancel_command_state(message: Message, state: FSMContext):
     await message.answer(text="Нажми /start для начала работы")
 
 
+@router.callback_query(StateFilter(FSMUserForm.check_data), F.data.in_(['data_change']))
+async def start_user(callback: CallbackQuery, state: FSMContext):
+    await callback.message.answer(text=LEXICON['user_name'])
+    await state.set_state(FSMUserForm.user_name)
+
+
 @router.message(Command(commands=['user']), StateFilter(default_state))
 async def start_user(message: Message, state: FSMContext):
     try:
@@ -56,13 +63,13 @@ async def start_user(message: Message, state: FSMContext):
 
     text_message = LEXICON['game'].format(game.name, game.start_date, game.end_date, game.description)
     await message.answer(text=text_message)
-    await asyncio.sleep(1)
+    await asyncio.sleep(0.5)
     await message.answer(text=LEXICON['user_name'])
     await state.set_state(FSMUserForm.user_name)
 
 
 @router.message(StateFilter(FSMUserForm.user_name))
-async def get_description_group(message: Message, state: FSMContext):
+async def get_email(message: Message, state: FSMContext):
     await state.update_data(user_name=message.text)
     message_text = LEXICON['email']
     await message.answer(text=message_text)
@@ -70,7 +77,7 @@ async def get_description_group(message: Message, state: FSMContext):
 
 
 @router.message(StateFilter(FSMUserForm.email))
-async def get_description_group(message: Message, state: FSMContext):
+async def get_wishlist(message: Message, state: FSMContext):
     await state.update_data(email=message.text)
     message_text = LEXICON['wishlist']
     await message.answer(text=message_text)
@@ -78,7 +85,7 @@ async def get_description_group(message: Message, state: FSMContext):
 
 
 @router.message(StateFilter(FSMUserForm.wishlist))
-async def get_description_group(message: Message, state: FSMContext):
+async def get_check(message: Message, state: FSMContext):
     await state.update_data(wishlist=message.text)
     answer = await state.get_data()
     message_text = LEXICON['check_data'].format(answer['user_name'], answer['email'], answer['wishlist'])
@@ -87,23 +94,19 @@ async def get_description_group(message: Message, state: FSMContext):
     await state.set_state(FSMUserForm.check_data)
 
 
-@router.callback_query(StateFilter(FSMUserForm.check_data), F.data.in_([LEXICON['ok'], LEXICON['mistake']]))
-async def get_description_group(callback: CallbackQuery, state: FSMContext):
-    if callback.data == LEXICON['ok']:
-        answer = await state.get_data()
-        game = answer['game']
-        message_text = LEXICON['in_game'].format(game.end_date)
-        participation = Player.objects.create(
-            telegram_id=callback.from_user.id,
-            game=game,
-            name=answer['user_name'],
-            email=answer['email'],
-            wishlist=answer['wishlist']
-        )
-        await callback.message.answer(text=message_text)
-        await callback.answer()
+@router.callback_query(StateFilter(FSMUserForm.check_data), F.data.in_(['data_save']))
+async def get_decision(callback: CallbackQuery, state: FSMContext):
+    answer = await state.get_data()
+    game = answer['game']
+    participation = Player.objects.create(
+        telegram_id=callback.from_user.id,
+        game=game,
+        name=answer['user_name'],
+        email=answer['email'],
+        wishlist=answer['wishlist']
+    )
+    message_text = LEXICON['in_game'].format(game.end_date)
+    await callback.message.answer(text=message_text)
+    await callback.answer()
 
-    elif callback.data == LEXICON['mistake']:
-        message_text = LEXICON['not_in_game']
-        await callback.message.answer(text=message_text)
-        await callback.answer()
+    

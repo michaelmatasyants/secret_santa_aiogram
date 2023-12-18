@@ -33,15 +33,15 @@ def price_kb():
     keyboard = [
         [
             InlineKeyboardButton(text=LEXICON['price_1'],
-                                 callback_data="price#1")
+                                 callback_data="price_1")
         ],
         [
             InlineKeyboardButton(text=LEXICON['price_2'],
-                                 callback_data="price#2")
+                                 callback_data="price_2")
         ],
         [
             InlineKeyboardButton(text=LEXICON['price_3'],
-                                 callback_data="price#3")
+                                 callback_data="price_3")
         ],
     ]
     price_keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard)
@@ -50,10 +50,22 @@ def price_kb():
 
 def confirm_bt():
     keyboard = [
-        [InlineKeyboardButton(text=LEXICON['ok'],
-                              callback_data=LEXICON['ok'])],
-        [InlineKeyboardButton(text=LEXICON['mistake'],
-                              callback_data=LEXICON['mistake'])],
+        [
+            InlineKeyboardButton(text=LEXICON['ok'],
+                                 callback_data='data_save')
+        ],
+        [
+            InlineKeyboardButton(text=LEXICON['mistake'],
+                                 callback_data='data_change')
+        ],
+    ]
+    create_confirm_kb = InlineKeyboardMarkup(inline_keyboard=keyboard)
+    return create_confirm_kb
+
+
+def get_group_kb(groups):
+    keyboard = [
+        [InlineKeyboardButton(text=group.name, callback_data=f'group_id#{group.id}')] for group in groups
     ]
     create_confirm_kb = InlineKeyboardMarkup(inline_keyboard=keyboard)
     return create_confirm_kb

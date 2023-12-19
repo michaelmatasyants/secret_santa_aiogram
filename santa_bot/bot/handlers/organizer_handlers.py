@@ -3,10 +3,10 @@ from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import CallbackQuery, Message, PreCheckoutQuery, SuccessfulPayment
+from aiogram.types import CallbackQuery, Message, PreCheckoutQuery, SuccessfulPayment, LabeledPrice
 from aiogram.utils.deep_linking import create_start_link
 from aiogram import Bot
-
+from aiogram.types.message import ContentType
 from django.conf import settings
 
 from santa_bot.bot.keyboards import price_kb, get_group_kb
@@ -68,6 +68,9 @@ async def get_payment(message: Message, state: FSMContext):
 async def get_donat(message: Message, state: FSMContext):
     await state.update_data(payment=message.text)
     message_text = "Ты супер!"
+    await bot.send_invoice(chat_id=message.chat.id, title='Донат', description='Ты творишь добро',
+                           payload='что-то про payload', provider_token='381764678:TEST:73853', currency="Rub",
+                           start_parameter="test_bot", prices=[LabeledPrice(label="руб", amount=10000)])
     await message.answer(text=message_text)
     await state.set_state(FSMPaymentForm.invoice)
 
@@ -75,7 +78,7 @@ async def get_donat(message: Message, state: FSMContext):
 @router.message(StateFilter(FSMPaymentForm.invoice))
 async def send_payment(message: Message, state: FSMContext):
     print(1)
-    await bot.send_invoice(chat_id=message.chat.id, title='Донат', description='Ты творишь добро', payload='что-то про payload', provider_token='381764678:TEST:73853', currency="Rub", start_parameter="test_bot",)
+    await bot.send_invoice(chat_id=message.chat.id, title='Донат', description='Ты творишь добро', payload='что-то про payload', provider_token='381764678:TEST:73853', currency="Rub", start_parameter="test_bot", prices=[LabeledPrice(label="руб", amount=10000)])
     await state.clear()
     print(2)
 
@@ -85,10 +88,10 @@ async def process_pre_checkout(pre_checkout_query: PreCheckoutQuery):
     await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
 
 
-# @router.message(content_types=ContentType.SUCCESSFUL_PAYMENT)
-# async def process_pay(message: Message):
-#     if message.successful_payment.invoice_payload == 'что-то про payload':
-#         await bot.send_message(message.from_user.id, "Спасибо за донат")
+@router.message(F.ContentType.SUCCESSFUL_PAYMENT)
+async def process_pay(message: Message):
+    if message.successful_payment.invoice_payload == 'что-то про payload':
+        await bot.send_message(message.from_user.id, "Спасибо за донат")
 
 
 # Ветка создания групп

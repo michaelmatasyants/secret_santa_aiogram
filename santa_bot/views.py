@@ -52,7 +52,7 @@ def del_allocation(request, game_id):
 
 def show_start(request, telegram_id):
 
-    player = get_object_or_404(Player, pk=telegram_id)
+    player = get_object_or_404(Player, telegram_id=telegram_id)
 
     context = {
         'player': player,

@@ -87,9 +87,9 @@ USE_I18N = True
 
 USE_TZ = True
 
-STATICFILES_DIRS = []
+STATICFILES_DIRS = ['/opt/secret_santa_aiogram/static']
 
-STATIC_ROOT = Path(BASE_DIR).joinpath('static')
+#STATIC_ROOT = Path(BASE_DIR).joinpath('static')
 
 STATIC_URL = 'static/'
 

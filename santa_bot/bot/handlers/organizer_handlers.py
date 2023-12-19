@@ -1,21 +1,12 @@
-from pathlib import Path
-
 from aiogram import Bot, F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import (
-    CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    LabeledPrice,
-    Message,
-    PreCheckoutQuery,
-    SuccessfulPayment,
-)
+from aiogram.types import (CallbackQuery, InlineKeyboardButton,
+                           InlineKeyboardMarkup, LabeledPrice, Message,
+                           PreCheckoutQuery)
 from aiogram.utils.deep_linking import create_start_link
-from aiogram.utils.markdown import link
 from django.conf import settings
 from django.db.models import Count
 
@@ -116,12 +107,14 @@ async def get_price(message: Message, state: FSMContext):
     await state.set_state(FSMFillForm.get_link)
 
 
-@router.callback_query(StateFilter(FSMFillForm.get_link), F.data.in_(['price_1', 'price_2', 'price_3']))
+@router.callback_query(StateFilter(FSMFillForm.get_link),
+                       F.data.in_(['price_1', 'price_2', 'price_3']))
 async def get_link(callback: CallbackQuery, state: FSMContext):
     await state.update_data(choose_price=LEXICON[callback.data])
     answers = await state.get_data()
     new_game = Game.objects.create(
-        organizer=Organizer.objects.get_or_create(telegram_id=callback.from_user.id)[0],
+        organizer=Organizer.objects.get_or_create(
+            telegram_id=callback.from_user.id)[0],
         name=answers['group_name'],
         description=answers['group_description'],
         price_limit=answers["choose_price"],
@@ -134,7 +127,7 @@ async def get_link(callback: CallbackQuery, state: FSMContext):
     await state.update_data(get_link=link)
     await callback.message.answer(text=f"{LEXICON['link']}\n\n{link}")
     await callback.answer()
-    await state.clear()  # выход из состояний
+    await state.clear()
 
 
 # Ветка управления группами

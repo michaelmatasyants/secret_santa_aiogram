@@ -152,9 +152,9 @@ async def display_group_details(callback: CallbackQuery,
 @router.callback_query(StateFilter(FSMMyGroupsForm.choose_group))
 async def group_actions(callback: CallbackQuery,
                         state: FSMContext):
-    callback.answer()
     back, edit, leave = LEXICON['group_info_btns'].split(', ')
     if callback.data == back:
+        callback.answer()
         await exit_fsm(callback, state)
     elif callback.data == edit:
         await callback.message.answer(text=LEXICON['change_wishlist'])

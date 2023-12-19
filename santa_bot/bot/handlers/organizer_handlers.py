@@ -161,34 +161,35 @@ async def start_user(callback: CallbackQuery, state: FSMContext):
 
 
 # Ветка оплаты
+@router.message(F.text == LEXICON['payment'], StateFilter(default_state))
+async def get_payment(message: Message, state: FSMContext):
+    text_message = "Пора сделать подарок создателям бота\n\n"  \
+                   "Если согласен, отправь любое сообщение в ответ, или"  \
+                   "нажми /start для возврата на главную"
+
+    await message.answer(text=text_message)
+    await state.set_state(FSMPaymentForm.payment)
+
+
 @router.message(StateFilter(FSMPaymentForm.payment))
 async def get_donat(message: Message, state: FSMContext):
     await state.update_data(payment=message.text)
-    flag = True
-    while flag:
-        try:
-            int(message.text)
-            flag = False
-        except Exception as e:
-            await message.answer("Пожалуйста, введи только число\n\nДля возврата нажми \start")
-            print(e)
-
-        message_text = "Ты супер!"
-        # await bot.send_invoice(chat_id=message.chat.id, title='Донат', description='Ты творишь добро',
-        #                        payload='что-то про payload', provider_token='381764678:TEST:73853', currency="Rub",
-        #                        start_parameter="test_bot", prices=[LabeledPrice(label="руб", amount=amount)])
-    await message.answer(text=message_text)
+    await bot.send_invoice(
+        chat_id=message.chat.id,
+        title='Донат',
+        description='Ты творишь добро',
+        payload='что-то про payload',
+        provider_token=settings.YOUKASSA_PAYMENT_TOKEN,
+        currency="RUB",
+        start_parameter="test_bot",
+        prices=[LabeledPrice(label="руб", amount=10000)]
+    )
     await state.set_state(FSMPaymentForm.invoice)
 
 
 @router.message(StateFilter(FSMPaymentForm.invoice))
 async def send_payment(message: Message, state: FSMContext):
-
-    answer = await state.get_data()
-    donate = answer['payment']
-    await bot.send_invoice(chat_id=message.chat.id, title='Донат', description='Ты творишь добро', payload='что-то про payload', provider_token='381764678:TEST:73853', currency="Rub", start_parameter="test_bot", prices=[LabeledPrice(label="руб", amount=int(donate) * 100)])
-    await state.clear()
-
+    print(1)
 
 
 @router.pre_checkout_query()

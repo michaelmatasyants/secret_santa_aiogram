@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from environs import Env
@@ -25,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'santa_bot',
+    'adminsortable2',
 ]
 
 MIDDLEWARE = [
@@ -87,12 +89,16 @@ USE_I18N = True
 
 USE_TZ = True
 
-STATICFILES_DIRS = ['/opt/secret_santa_aiogram/static']
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-#STATIC_ROOT = Path(BASE_DIR).joinpath('static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'assets')
 
-STATIC_URL = 'static/'
+STATIC_URL = '/assets/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 DJANGO_ALLOW_ASYNC_UNSAFE = True
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+MEDIA_URL = '/media/'

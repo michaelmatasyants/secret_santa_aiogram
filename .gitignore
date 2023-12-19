@@ -154,3 +154,5 @@ cython_debug/
 
 # Other files
 **migrations/
+**media
+**assets

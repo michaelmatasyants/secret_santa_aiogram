@@ -5,9 +5,15 @@ from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import (CallbackQuery, InlineKeyboardButton,
-                           InlineKeyboardMarkup, LabeledPrice, Message,
-                           PreCheckoutQuery, SuccessfulPayment)
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    LabeledPrice,
+    Message,
+    PreCheckoutQuery,
+    SuccessfulPayment,
+)
 from aiogram.utils.deep_linking import create_start_link
 from aiogram.utils.markdown import link
 from django.conf import settings
@@ -85,7 +91,7 @@ async def get_description_group(message: Message, state: FSMContext):
 async def get_game_date(message: Message, state: FSMContext):
     await state.update_data(group_description=message.text)
     message_text = "А когда все узнают своих подопечных?\n\n" \
-                   "Пора указать дату."
+                   "Пора указать дату в формате ГГГГ-ММ-ДД."
     await message.answer(message_text)
     await state.set_state(FSMFillForm.game_date)
 
@@ -94,7 +100,9 @@ async def get_game_date(message: Message, state: FSMContext):
 async def get_date(message: Message, state: FSMContext):
     await state.update_data(game_date=message.text)
     message_text = "Теперь все понятно!\n\n" \
-                   "Пора указать дату и время проведения розыгрыша, чтобы бот уведомил участников."
+                   "Пора указать дату и время проведения розыгрыша, "  \
+                   "чтобы бот уведомил участников.\n"  \
+                   "Формат ввода ГГГГ-ММ-ДД ЧЧ:ММ:СС"
     await message.answer(message_text)
     await state.set_state(FSMFillForm.choose_date)
 
@@ -183,6 +191,7 @@ async def get_donat(callback: CallbackQuery, state: FSMContext):
         prices=[LabeledPrice(label="руб", amount=10000)]
     )
     await state.set_state(FSMPaymentForm.invoice)
+    await state.clear()
 
 
 # @router.message(StateFilter(FSMPaymentForm.invoice))

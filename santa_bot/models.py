@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.timezone import now
 
 
 class Organizer(models.Model):
@@ -44,7 +45,8 @@ class Game(models.Model):
     start_date = models.DateField(
         null=True,
         blank=True,
-        verbose_name='Дата начала'
+        verbose_name='Дата начала',
+        auto_now_add=True
     )
 
     end_date = models.DateField(
@@ -67,7 +69,8 @@ class Game(models.Model):
     )
 
     players_distributed = models.BooleanField(
-        verbose_name='Распределено?'
+        verbose_name='Распределено?',
+        default=False
     )
 
     def __str__(self):
@@ -128,3 +131,4 @@ class Player(models.Model):
     class Meta:
         verbose_name = 'участник'
         verbose_name_plural = 'участники'
+        unique_together = ['telegram_id', 'game']

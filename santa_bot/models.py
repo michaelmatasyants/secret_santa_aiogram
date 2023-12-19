@@ -125,6 +125,14 @@ class Player(models.Model):
         related_name='santa'
     )
 
+    wishlist_url = models.CharField(
+        verbose_name='Ссылка на вишлист',
+        max_length=300,
+        blank=True,
+        null=True,
+        default=None
+    )
+
     def __str__(self):
         return f'{self.telegram_id}'
 

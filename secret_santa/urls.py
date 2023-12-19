@@ -16,7 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from santa_bot import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('<int:telegram_id>', views.show_start),
+    path('game/<int:game_id>', views.allocation),
+    path('delgame/<int:game_id>', views.del_allocation),
 ]

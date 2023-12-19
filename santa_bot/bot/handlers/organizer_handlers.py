@@ -88,10 +88,10 @@ async def process_pre_checkout(pre_checkout_query: PreCheckoutQuery):
     await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
 
 
-@router.message(F.ContentType.SUCCESSFUL_PAYMENT)
-async def process_pay(message: Message):
-    if message.successful_payment.invoice_payload == 'что-то про payload':
-        await bot.send_message(message.from_user.id, "Спасибо за донат")
+# @router.message(F.ContentType.SUCCESSFUL_PAYMENT)
+# async def process_pay(message: Message):
+#     if message.successful_payment.invoice_payload == 'что-то про payload':
+#         await bot.send_message(message.from_user.id, "Спасибо за донат")
 
 
 # Ветка создания групп

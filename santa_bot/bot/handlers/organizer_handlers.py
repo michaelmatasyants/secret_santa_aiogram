@@ -3,13 +3,12 @@ from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, PreCheckoutQuery, SuccessfulPayment
 from aiogram.utils.deep_linking import create_start_link
-from aiogram.utils.markdown import link
 from aiogram import Bot
+
 from django.conf import settings
 
-from pathlib import Path
 from santa_bot.bot.keyboards import price_kb, get_group_kb
 from santa_bot.bot.LEXICON import LEXICON
 
@@ -33,6 +32,11 @@ class FSMAdminForm(StatesGroup):
     send_wishlist = State()
 
 
+class FSMPaymentForm(StatesGroup):
+    payment = State()
+    invoice = State()
+
+
 # выход из машины состояний
 @router.message(Command(commands='cancel'), StateFilter(default_state))
 async def process_cancel_command(message: Message):
@@ -49,6 +53,42 @@ async def process_cancel_command_state(message: Message, state: FSMContext):
     )
     await state.clear()
     await message.answer(text="Нажми /start для начала работы")
+
+
+# Ветка доната
+@router.message(F.text == LEXICON['payment'], StateFilter(default_state))
+async def get_payment(message: Message, state: FSMContext):
+    text_message = "Пора сделать подарок создателям бота\n\n" \
+                   "Введи сумму доната"
+    await message.answer(text=text_message)
+    await state.set_state(FSMPaymentForm.payment)
+
+
+@router.message(StateFilter(FSMPaymentForm.payment))
+async def get_donat(message: Message, state: FSMContext):
+    await state.update_data(payment=message.text)
+    message_text = "Ты супер!"
+    await message.answer(text=message_text)
+    await state.set_state(FSMPaymentForm.invoice)
+
+
+@router.message(StateFilter(FSMPaymentForm.invoice))
+async def send_payment(message: Message, state: FSMContext):
+    print(1)
+    await bot.send_invoice(chat_id=message.chat.id, title='Донат', description='Ты творишь добро', payload='что-то про payload', provider_token='381764678:TEST:73853', currency="Rub", start_parameter="test_bot",)
+    await state.clear()
+    print(2)
+
+
+@router.pre_checkout_query()
+async def process_pre_checkout(pre_checkout_query: PreCheckoutQuery):
+    await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
+
+
+# @router.message(content_types=ContentType.SUCCESSFUL_PAYMENT)
+# async def process_pay(message: Message):
+#     if message.successful_payment.invoice_payload == 'что-то про payload':
+#         await bot.send_message(message.from_user.id, "Спасибо за донат")
 
 
 # Ветка создания групп
@@ -72,7 +112,7 @@ async def get_description_group(message: Message, state: FSMContext):
 
 
 @router.message(StateFilter(FSMFillForm.description_group))
-async def get_date(message: Message, state: FSMContext):
+async def get_game_date(message: Message, state: FSMContext):
     await state.update_data(description_group=message.text)
     message_text = "А когда все узнают своих подопечных?\n\n" \
                    "Пора указать дату."
@@ -90,7 +130,7 @@ async def get_date(message: Message, state: FSMContext):
 
 
 @router.message(StateFilter(FSMFillForm.choose_date))
-async def get_date(message: Message, state: FSMContext):
+async def get_price(message: Message, state: FSMContext):
     await state.update_data(choose_date=message.text)
     message_text = "Выбери стоимость подарка"
 
@@ -106,8 +146,6 @@ async def get_link(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(text=f"{LEXICON['link']}\n\n{link}")
     await callback.answer()
     await state.clear()
-    #print(link)
-    # await state.clear() #выход из состояний
 
 
 # Ветка управления группами
@@ -120,7 +158,6 @@ async def admin_group_info(message: Message, state: FSMContext):  # ДОБАВИ
 
 @router.callback_query(StateFilter(FSMAdminForm.group_information), F.data.in_(['your_groups', ]))
 async def start_user(callback: CallbackQuery, state: FSMContext):
-    print(callback.message.text)
     await state.update_data(group_information=callback.message.text)
     group_info = {
         "name": callback.message.text,

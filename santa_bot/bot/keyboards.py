@@ -8,6 +8,7 @@ clients_start_kb = ReplyKeyboardMarkup(
         [KeyboardButton(text=LEXICON['create_group'])],
         [KeyboardButton(text=LEXICON['my_groups'])],
         [KeyboardButton(text=LEXICON['admin_groups'])],
+        [KeyboardButton(text=LEXICON['payment'])],
     ],
     resize_keyboard=True)
 
@@ -67,7 +68,7 @@ def get_group_kb():
     list_of_groups = ["Группа alfa", "Группа beta", "Группа omega"]
     keyboard = [
         [
-            InlineKeyboardButton(text=group, callback_data='your_groups') for group in list_of_groups
+            InlineKeyboardButton(text=group, callback_data='your_group') for group in list_of_groups
         ],
     ]
     create_confirm_kb = InlineKeyboardMarkup(inline_keyboard=keyboard)

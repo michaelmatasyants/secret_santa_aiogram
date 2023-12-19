@@ -45,6 +45,7 @@ async def process_cancel_command_state(message: Message, state: FSMContext):
 @router.callback_query(StateFilter(FSMUserForm.check_data), F.data.in_(['data_change']))
 async def start_user(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(text=LEXICON['user_name'])
+    await callback.answer()
     await state.set_state(FSMUserForm.user_name)
 
 

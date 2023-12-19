@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import os
 
@@ -62,6 +64,7 @@ async def get_ready(callback: CallbackQuery):
 
 @router.message(F.text == LEXICON['my_groups'], StateFilter(default_state))
 async def show_my_groups(message: Message, state: FSMContext):
+    await state.clear()
     player_tg_id = message.chat.id
     try:
         players = Player.objects.select_related('game')  \

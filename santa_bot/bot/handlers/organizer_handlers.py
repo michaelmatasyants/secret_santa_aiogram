@@ -5,13 +5,9 @@ from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import (
-    CallbackQuery,
-    LabeledPrice,
-    Message,
-    PreCheckoutQuery,
-    SuccessfulPayment,
-)
+from aiogram.types import (CallbackQuery, InlineKeyboardButton,
+                           InlineKeyboardMarkup, LabeledPrice, Message,
+                           PreCheckoutQuery, SuccessfulPayment)
 from aiogram.utils.deep_linking import create_start_link
 from aiogram.utils.markdown import link
 from django.conf import settings
@@ -159,23 +155,25 @@ async def start_user(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSMAdminForm.group_confirm)
 
 
-
 # Ветка оплаты
 @router.message(F.text == LEXICON['payment'], StateFilter(default_state))
 async def get_payment(message: Message, state: FSMContext):
-    text_message = "Пора сделать подарок создателям бота\n\n"  \
-                   "Если согласен, отправь любое сообщение в ответ, или"  \
-                   "нажми /start для возврата на главную"
-
-    await message.answer(text=text_message)
+    text_message = "Пора сделать подарок создателям бота\n\n"
+    kb = [
+        [InlineKeyboardButton(text='Задонатить 100 руб.',
+                              callback_data='payment')]
+    ]
+    await message.answer(
+        text=text_message,
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=kb)
+    )
     await state.set_state(FSMPaymentForm.payment)
 
 
-@router.message(StateFilter(FSMPaymentForm.payment))
-async def get_donat(message: Message, state: FSMContext):
-    await state.update_data(payment=message.text)
+@router.callback_query(StateFilter(FSMPaymentForm.payment))
+async def get_donat(callback: CallbackQuery, state: FSMContext):
     await bot.send_invoice(
-        chat_id=message.chat.id,
+        chat_id=callback.from_user.id,
         title='Донат',
         description='Ты творишь добро',
         payload='что-то про payload',
@@ -187,9 +185,9 @@ async def get_donat(message: Message, state: FSMContext):
     await state.set_state(FSMPaymentForm.invoice)
 
 
-@router.message(StateFilter(FSMPaymentForm.invoice))
-async def send_payment(message: Message, state: FSMContext):
-    print(1)
+# @router.message(StateFilter(FSMPaymentForm.invoice))
+# async def send_payment(message: Message, state: FSMContext):
+#     print(1)
 
 
 @router.pre_checkout_query()

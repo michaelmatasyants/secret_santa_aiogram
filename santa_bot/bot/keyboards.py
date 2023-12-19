@@ -1,5 +1,9 @@
-from aiogram.types import (InlineKeyboardButton, InlineKeyboardMarkup,
-                           KeyboardButton, ReplyKeyboardMarkup)
+from aiogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+)
 
 from santa_bot.bot.LEXICON import LEXICON
 
@@ -8,6 +12,7 @@ clients_start_kb = ReplyKeyboardMarkup(
         [KeyboardButton(text=LEXICON['create_group'])],
         [KeyboardButton(text=LEXICON['my_groups'])],
         [KeyboardButton(text=LEXICON['admin_groups'])],
+        [KeyboardButton(text=LEXICON['payment'])],
     ],
     resize_keyboard=True)
 

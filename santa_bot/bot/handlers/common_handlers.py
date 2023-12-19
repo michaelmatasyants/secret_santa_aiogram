@@ -13,14 +13,21 @@ from aiogram.types import (
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from santa_bot.bot.keyboards import (clients_start_kb, create_inline_kb,
-                                     start_info_kb)
+from santa_bot.bot.keyboards import clients_start_kb, create_inline_kb, start_info_kb
 from santa_bot.bot.LEXICON import LEXICON
 from santa_bot.models import Game, Player
 
 os.environ['DJANGO_ALLOW_ASYNC_UNSAFE'] = 'True'
 
 router = Router()
+
+class FSMUserForm(StatesGroup):
+    user_name = State()
+    email = State()
+    wishlist = State()
+    check_data = State()
+    data_change = State()
+    game = State()
 
 
 class FSMMyGroupsForm(StatesGroup):
@@ -41,9 +48,33 @@ async def exit_fsm(handled: Message | CallbackQuery,
 
 @router.message(Command('restart'))
 @router.message(CommandStart())
-async def start_command(message: Message):
-    await message.answer(text=LEXICON['greeting'],
-                         reply_markup=create_inline_kb())
+@router.message(Command(commands=['start']), StateFilter(default_state))
+async def start_command(message: Message, state: FSMContext):
+    # if message.text in LEXICON['kb_buttons']:
+    #     await exit_fsm(message, state)
+    if ' ' in message.text:
+        game_id = int(message.text.split(" ")[-1])
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            await message.answer("Данная игра уже недоступна!")
+        await state.update_data(game=game)
+        if Player.objects.filter(
+                telegram_id=message.from_user.id, game=game).exists():
+            await message.answer("Вы уже зарегистрированы на эту игру")
+            return
+        text_message = LEXICON['game'].format(
+                         game.name,
+                         game.start_date,
+                         game.end_date,
+                         game.description)
+        await message.answer(text=text_message)
+        await asyncio.sleep(1)
+        await message.answer(text=LEXICON['user_name'])
+        await state.set_state(FSMUserForm.user_name)
+    else:
+        await message.answer(text=LEXICON['greeting'],
+                             reply_markup=create_inline_kb())
 
 
 @router.callback_query(F.data == LEXICON['ready'])
@@ -62,6 +93,9 @@ async def get_ready(callback: CallbackQuery):
 
 @router.message(F.text == LEXICON['my_groups'], StateFilter(default_state))
 async def show_my_groups(message: Message, state: FSMContext):
+    # if message.text in LEXICON['kb_buttons']:
+    #     await exit_fsm(message, state)
+    await state.clear()
     player_tg_id = message.chat.id
     try:
         players = Player.objects.select_related('game')  \
@@ -71,9 +105,11 @@ async def show_my_groups(message: Message, state: FSMContext):
         await exit_fsm(message, state)
     if players:
         kb_builder = InlineKeyboardBuilder()
-        buttons = [InlineKeyboardButton(text=player.game.name,
-                                        callback_data=player.game.name)
-                   for player in players]
+        buttons = [
+            InlineKeyboardButton(text=player.game.name,
+                                 callback_data=player.game.name)
+            for player in players
+        ]
         kb_builder.row(*buttons, width=1)
         await message.answer(
             text=LEXICON['all_player_groups'],
@@ -116,6 +152,7 @@ async def display_group_details(callback: CallbackQuery,
 @router.callback_query(StateFilter(FSMMyGroupsForm.choose_group))
 async def group_actions(callback: CallbackQuery,
                         state: FSMContext):
+    callback.answer()
     back, edit, leave = LEXICON['group_info_btns'].split(', ')
     if callback.data == back:
         await exit_fsm(callback, state)
@@ -139,6 +176,8 @@ async def group_actions(callback: CallbackQuery,
 
 @router.message(StateFilter(FSMMyGroupsForm.edit_wishlist))
 async def change_wishlist(message: Message, state: FSMContext):
+    # if message.text in LEXICON['kb_buttons']:
+    #     await exit_fsm(message, state)
     answer = await state.get_data()
     player = Player.objects.select_related('game')  \
                    .filter(telegram_id=message.chat.id,
@@ -154,6 +193,7 @@ async def change_wishlist(message: Message, state: FSMContext):
 
 @router.callback_query(StateFilter(FSMMyGroupsForm.leave_group))
 async def leave_group(callback: CallbackQuery, state: FSMContext):
+    callback.answer()
     if callback.data == LEXICON['no']:
         await exit_fsm(callback, state)
     elif callback.data == LEXICON['yes']:

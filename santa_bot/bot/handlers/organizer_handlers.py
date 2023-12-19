@@ -1,20 +1,25 @@
-from aiogram import F, Router
+from pathlib import Path
+
+from aiogram import Bot, F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import (
+    CallbackQuery,
+    LabeledPrice,
+    Message,
+    PreCheckoutQuery,
+    SuccessfulPayment,
+)
 from aiogram.utils.deep_linking import create_start_link
 from aiogram.utils.markdown import link
-from aiogram import Bot
 from django.conf import settings
 from django.db.models import Count
 
-from santa_bot.models import Game, Organizer
-
-from pathlib import Path
-from santa_bot.bot.keyboards import price_kb, get_group_kb
+from santa_bot.bot.keyboards import get_group_kb, price_kb
 from santa_bot.bot.LEXICON import LEXICON
+from santa_bot.models import Game, Organizer
 
 storage = MemoryStorage()
 router = Router()
@@ -34,6 +39,11 @@ class FSMAdminForm(StatesGroup):
     group_information = State()
     group_confirm = State()
     send_wishlist = State()
+
+
+class FSMPaymentForm(StatesGroup):
+    payment = State()
+    invoice = State()
 
 
 # выход из машины состояний
@@ -58,6 +68,7 @@ async def process_cancel_command_state(message: Message, state: FSMContext):
 @router.message(Command(commands=['newgroup']), StateFilter(default_state))
 @router.message(F.text == LEXICON['create_group'], StateFilter(default_state))
 async def get_ready(message: Message, state: FSMContext):
+    await state.clear()
     text_message = "Самое время создать новую группу, куда ты можешь пригласить своих друзей, коллег или " \
                    "родственников\n\n" \
                    "Давай выберем забавное имя для новой группы!"
@@ -120,12 +131,12 @@ async def get_link(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(text=f"{LEXICON['link']}\n\n{link}")
     await callback.answer()
     await state.clear()  # выход из состояний
-    print(link)
 
 
 # Ветка управления группами
 @router.message(F.text == LEXICON['admin_groups'], StateFilter(default_state))
 async def admin_group_info(message: Message, state: FSMContext):
+    await state.clear()
     groups = Game.objects.filter(organizer__telegram_id=message.from_user.id)
     text_message = LEXICON['your_groups']
     await message.answer(text=text_message, reply_markup=get_group_kb(groups))
@@ -141,7 +152,45 @@ async def start_user(callback: CallbackQuery, state: FSMContext):
     message_text = f"Название группы: {game.name}\n\n" \
         f"Описание:\n{game.description}\n\n" \
         f"Регистрация в группу {status}\n\n" \
-        f"Количество участников: {game.player_count}\n"
+        f"Количество участников: {game.player_count}\n\n"  \
+        f"Ссылка для регистрации\n {game.link}\n"
 
     await callback.message.answer(text=message_text)
     await state.set_state(FSMAdminForm.group_confirm)
+
+
+
+# Ветка оплаты
+@router.message(StateFilter(FSMPaymentForm.payment))
+async def get_donat(message: Message, state: FSMContext):
+    await state.update_data(payment=message.text)
+    flag = True
+    while flag:
+        try:
+            int(message.text)
+            flag = False
+        except Exception as e:
+            await message.answer("Пожалуйста, введи только число\n\nДля возврата нажми \start")
+            print(e)
+
+        message_text = "Ты супер!"
+        # await bot.send_invoice(chat_id=message.chat.id, title='Донат', description='Ты творишь добро',
+        #                        payload='что-то про payload', provider_token='381764678:TEST:73853', currency="Rub",
+        #                        start_parameter="test_bot", prices=[LabeledPrice(label="руб", amount=amount)])
+    await message.answer(text=message_text)
+    await state.set_state(FSMPaymentForm.invoice)
+
+
+@router.message(StateFilter(FSMPaymentForm.invoice))
+async def send_payment(message: Message, state: FSMContext):
+
+    answer = await state.get_data()
+    donate = answer['payment']
+    await bot.send_invoice(chat_id=message.chat.id, title='Донат', description='Ты творишь добро', payload='что-то про payload', provider_token='381764678:TEST:73853', currency="Rub", start_parameter="test_bot", prices=[LabeledPrice(label="руб", amount=int(donate) * 100)])
+    await state.clear()
+
+
+
+@router.pre_checkout_query()
+async def process_pre_checkout(pre_checkout_query: PreCheckoutQuery):
+    await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)

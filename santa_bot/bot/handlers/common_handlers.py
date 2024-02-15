@@ -5,15 +5,12 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup, default_state
-from aiogram.types import (
-    CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    Message,
-)
+from aiogram.types import (CallbackQuery, InlineKeyboardButton,
+                           InlineKeyboardMarkup, Message)
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from santa_bot.bot.keyboards import clients_start_kb, create_inline_kb, start_info_kb
+from santa_bot.bot.keyboards import (clients_start_kb, create_inline_kb,
+                                     start_info_kb)
 from santa_bot.bot.LEXICON import LEXICON
 from santa_bot.models import Game, Player
 
@@ -67,12 +64,15 @@ async def start_command(message: Message, state: FSMContext):
                          game.name,
                          game.start_date,
                          game.end_date,
-                         game.description)
+                         game.description
+        )
+        # Картинка старта с тайным сантой
         await message.answer(text=text_message)
         await asyncio.sleep(1)
         await message.answer(text=LEXICON['user_name'])
         await state.set_state(FSMUserForm.user_name)
     else:
+        # Картинка старта с тайным сантой
         await message.answer(text=LEXICON['greeting'],
                              reply_markup=create_inline_kb())
 

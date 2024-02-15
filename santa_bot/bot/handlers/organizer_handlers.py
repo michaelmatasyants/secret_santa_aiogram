@@ -81,9 +81,8 @@ async def get_description_group(message: Message, state: FSMContext):
 @router.message(StateFilter(FSMFillForm.group_description))
 async def get_game_date(message: Message, state: FSMContext):
     await state.update_data(group_description=message.text)
-    message_text = "А когда все узнают своих подопечных?\n\n" \
-                   "Пора указать дату в формате ГГГГ-ММ-ДД."
-    await message.answer(message_text)
+    # картинка с салютом
+    await message.answer(text=LEXICON['santa_selection_date'])
     await state.set_state(FSMFillForm.game_date)
 
 
@@ -100,6 +99,7 @@ async def get_date(message: Message, state: FSMContext):
 
 @router.message(StateFilter(FSMFillForm.choose_date))
 async def get_price(message: Message, state: FSMContext):
+    # картинка подарка с бантом
     await state.update_data(choose_date=message.text)
     message_text = "Выбери стоимость подарка"
 
@@ -135,6 +135,7 @@ async def get_link(callback: CallbackQuery, state: FSMContext):
 async def admin_group_info(message: Message, state: FSMContext):
     await state.clear()
     groups = Game.objects.filter(organizer__telegram_id=message.from_user.id)
+    # картинка с управлением группами (менеджмент или что-то похожее)
     text_message = LEXICON['your_groups']
     await message.answer(text=text_message, reply_markup=get_group_kb(groups))
     await state.set_state(FSMAdminForm.group_information)
@@ -159,6 +160,7 @@ async def start_user(callback: CallbackQuery, state: FSMContext):
 # Ветка оплаты
 @router.message(F.text == LEXICON['payment'], StateFilter(default_state))
 async def get_payment(message: Message, state: FSMContext):
+    # Картинка спасибо за донат
     text_message = "Пора сделать подарок создателям бота\n\n"
     kb = [
         [InlineKeyboardButton(text='Задонатить 100 руб.',

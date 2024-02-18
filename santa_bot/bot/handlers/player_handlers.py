@@ -1,17 +1,25 @@
+import os
 import asyncio
+from pathlib import Path
 
-from aiogram import F, Router
+from aiogram import Bot, F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, FSInputFile
+from django.conf import settings
 
 from santa_bot.bot.handlers.common_handlers import exit_fsm
 from santa_bot.bot.keyboards import confirm_bt
 from santa_bot.bot.LEXICON import LEXICON
 from santa_bot.models import Game, Player
 
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+
+bot = Bot(settings.TELEGRAM_TOKEN)
 storage = MemoryStorage()
 router = Router()
 
@@ -35,8 +43,6 @@ async def process_cancel_command(message: Message):
 
 @router.message(Command(commands='cancel'), ~StateFilter(default_state))
 async def process_cancel_command_state(message: Message, state: FSMContext):
-    # if message.text in LEXICON['kb_buttons']:
-    #     await exit_fsm()
     await message.answer(
         text='Вы вышли из машины состояний\n\n'
     )
@@ -51,35 +57,8 @@ async def editing_start_user(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSMUserForm.user_name)
 
 
-# @router.message(Command(commands=['start']), StateFilter(default_state))
-# async def start_user(message: Message, state: FSMContext):
-#
-#     game_id = int(message.text.split(" ")[-1])
-#     try:
-#         game = Game.objects.get(id=game_id)
-#     except Game.DoesNotExist:
-#         await message.answer("Данная игра уже недоступна!")
-#     await state.update_data(game=game)
-#     if Player.objects.filter(telegram_id=message.from_user.id,game=game)  \
-#                      .exists():
-#         await message.answer("Вы уже зарегистрированы на эту игру")
-#         return
-#
-#     text_message = LEXICON['game'].format(
-#                          game.name,
-#                          game.start_date,
-#                          game.end_date,
-#                          game.description)
-#     await message.answer(text=text_message)
-#     await asyncio.sleep(0.5)
-#     await message.answer(text=LEXICON['user_name'])
-#     await state.set_state(FSMUserForm.user_name)
-
-
 @router.message(StateFilter(FSMUserForm.user_name))
 async def get_email(message: Message, state: FSMContext):
-    # if message.text in LEXICON['kb_buttons']:
-    #     await exit_fsm(message, state)
     await state.update_data(user_name=message.text)
     message_text = LEXICON['email']
     await message.answer(text=message_text)
@@ -88,18 +67,17 @@ async def get_email(message: Message, state: FSMContext):
 
 @router.message(StateFilter(FSMUserForm.email))
 async def get_wishlist(message: Message, state: FSMContext):
-    # if message.text in LEXICON['kb_buttons']:
-    #     await exit_fsm(message, state)
     await state.update_data(email=message.text)
     message_text = LEXICON['wishlist']
+    file_path = os.path.join(BASE_DIR / "media", 'present.jpg')
+    photo = FSInputFile(path=file_path, filename='present.jpg')
+    await bot.send_photo(chat_id=message.chat.id, photo=photo)
     await message.answer(text=message_text)
     await state.set_state(FSMUserForm.wishlist)
 
 
 @router.message(StateFilter(FSMUserForm.wishlist))
 async def get_check(message: Message, state: FSMContext):
-    # if message.text in LEXICON['kb_buttons']:
-    #     await exit_fsm(message, state)
     await state.update_data(wishlist=message.text)
     answer = await state.get_data()
     message_text = LEXICON['check_data'].format(
@@ -123,6 +101,9 @@ async def get_decision(callback: CallbackQuery, state: FSMContext):
         email=answer['email'],
         wishlist=answer['wishlist']
     )
+    file_path = os.path.join(BASE_DIR / "media", 'firework.jpg')
+    photo = FSInputFile(path=file_path, filename='firework.jpg')
+    await callback.answer(photo=photo)
     message_text = LEXICON['in_game'].format(game.end_date)
     await callback.message.answer(text=message_text)
     await callback.answer()

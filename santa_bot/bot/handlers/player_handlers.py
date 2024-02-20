@@ -1,5 +1,4 @@
 import os
-import asyncio
 from pathlib import Path
 
 from aiogram import Bot, F, Router
@@ -10,12 +9,10 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import CallbackQuery, Message, FSInputFile
 from django.conf import settings
 
-from santa_bot.bot.handlers.common_handlers import exit_fsm
+from santa_bot.bot.functions import message_send_photo, callback_send_photo
 from santa_bot.bot.keyboards import confirm_bt
 from santa_bot.bot.LEXICON import LEXICON
-from santa_bot.models import Game, Player
-
-
+from santa_bot.models import Player
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
@@ -69,9 +66,7 @@ async def get_email(message: Message, state: FSMContext):
 async def get_wishlist(message: Message, state: FSMContext):
     await state.update_data(email=message.text)
     message_text = LEXICON['wishlist']
-    file_path = os.path.join(BASE_DIR / "media", 'present.jpg')
-    photo = FSInputFile(path=file_path, filename='present.jpg')
-    await bot.send_photo(chat_id=message.chat.id, photo=photo)
+    await message_send_photo(message, 'present.jpg')
     await message.answer(text=message_text)
     await state.set_state(FSMUserForm.wishlist)
 
@@ -101,9 +96,7 @@ async def get_decision(callback: CallbackQuery, state: FSMContext):
         email=answer['email'],
         wishlist=answer['wishlist']
     )
-    file_path = os.path.join(BASE_DIR / "media", 'firework.jpg')
-    photo = FSInputFile(path=file_path, filename='firework.jpg')
-    await callback.answer(photo=photo)
+    await callback_send_photo(callback, 'firework.jpg')
     message_text = LEXICON['in_game'].format(game.end_date)
     await callback.message.answer(text=message_text)
     await callback.answer()

@@ -13,6 +13,7 @@ from aiogram.utils.deep_linking import create_start_link
 from django.conf import settings
 from django.db.models import Count
 
+from santa_bot.bot.functions import message_send_photo
 from santa_bot.bot.keyboards import get_group_kb, price_kb
 from santa_bot.bot.LEXICON import LEXICON
 from santa_bot.models import Game, Organizer
@@ -88,9 +89,7 @@ async def get_description_group(message: Message, state: FSMContext):
 async def get_game_date(message: Message, state: FSMContext):
     current_state = await state.set_state()
     await state.update_data(group_description=message.text)
-    file_path = os.path.join(BASE_DIR / "media", 'firework.jpg')
-    photo = FSInputFile(path=file_path, filename='firework.jpg')
-    await bot.send_photo(chat_id=message.chat.id, photo=photo)
+    await message_send_photo(message, 'firework.jpg')
     message_text = "А когда все узнают своих подопечных?\n\n" \
                    "Пора указать дату в формате ГГГГ-ММ-ДД."
     await message.answer(message_text)
@@ -112,9 +111,7 @@ async def get_date(message: Message, state: FSMContext):
 async def get_price(message: Message, state: FSMContext):
     await state.update_data(choose_date=message.text)
     message_text = "Выбери стоимость подарка"
-    file_path = os.path.join(BASE_DIR / "media", 'present2.jpg')
-    photo = FSInputFile(path=file_path, filename='present2.jpg')
-    await bot.send_photo(chat_id=message.chat.id, photo=photo)
+    await message_send_photo(message, 'present2.jpg')
     await message.answer(message_text, reply_markup=price_kb())
     await state.set_state(FSMFillForm.get_link)
 
@@ -148,9 +145,7 @@ async def admin_group_info(message: Message, state: FSMContext):
     await state.clear()
     groups = Game.objects.filter(organizer__telegram_id=message.from_user.id)
     text_message = LEXICON['your_groups']
-    file_path = os.path.join(BASE_DIR / "media", 'santa-manager.jpg')
-    photo = FSInputFile(path=file_path, filename='santa-manager.jpg')
-    await bot.send_photo(chat_id=message.chat.id, photo=photo)
+    await message_send_photo(message, 'anta-manager.jpg')
     await message.answer(text=text_message, reply_markup=get_group_kb(groups))
     await state.set_state(FSMAdminForm.group_information)
 
@@ -179,9 +174,7 @@ async def get_payment(message: Message, state: FSMContext):
         [InlineKeyboardButton(text='Задонатить 100 руб.',
                               callback_data='payment')]
     ]
-    file_path = os.path.join(BASE_DIR / "media", 'Scrooge.jpg')
-    photo = FSInputFile(path=file_path, filename='Scrooge.jpg')
-    await bot.send_photo(chat_id=message.chat.id, photo=photo)
+    await message_send_photo(message, 'Scrooge.jpg')
     await message.answer(
         text=text_message,
         reply_markup=InlineKeyboardMarkup(inline_keyboard=kb)

@@ -10,13 +10,13 @@ from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
-    FSInputFile,
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from santa_bot.bot.functions import message_send_photo
 from santa_bot.bot.keyboards import clients_start_kb, create_inline_kb, start_info_kb
 from santa_bot.bot.LEXICON import LEXICON
-from santa_bot.models import Game, Player, Image
+from santa_bot.models import Game, Player
 from django.conf import settings
 from pathlib import Path
 
@@ -58,9 +58,6 @@ async def exit_fsm(handled: Message | CallbackQuery,
 @router.message(CommandStart())
 @router.message(Command(commands=['start']), StateFilter(default_state))
 async def start_command(message: Message, state: FSMContext):
-    #print(message)
-    # if message.text in LEXICON['kb_buttons']:
-    #     await exit_fsm(message, state)
     if ' ' in message.text:
         game_id = int(message.text.split(" ")[-1])
         try:
@@ -82,9 +79,7 @@ async def start_command(message: Message, state: FSMContext):
         await message.answer(text=LEXICON['user_name'])
         await state.set_state(FSMUserForm.user_name)
     else:
-        file_path = os.path.join(BASE_DIR / "media", 's-bot.jpg')
-        photo = FSInputFile(path=file_path, filename='s_bot.jpg')
-        await bot.send_photo(chat_id=message.chat.id, photo=photo)
+        await message_send_photo(message, 's-bot.jpg')
         await message.answer(text=LEXICON['greeting'],
                              reply_markup=create_inline_kb())
 
@@ -105,8 +100,6 @@ async def get_ready(callback: CallbackQuery):
 
 @router.message(F.text == LEXICON['my_groups'], StateFilter(default_state))
 async def show_my_groups(message: Message, state: FSMContext):
-    # if message.text in LEXICON['kb_buttons']:
-    #     await exit_fsm(message, state)
     await state.clear()
     player_tg_id = message.chat.id
     try:
@@ -188,8 +181,6 @@ async def group_actions(callback: CallbackQuery,
 
 @router.message(StateFilter(FSMMyGroupsForm.edit_wishlist))
 async def change_wishlist(message: Message, state: FSMContext):
-    # if message.text in LEXICON['kb_buttons']:
-    #     await exit_fsm(message, state)
     answer = await state.get_data()
     player = Player.objects.select_related('game') \
         .filter(telegram_id=message.chat.id,

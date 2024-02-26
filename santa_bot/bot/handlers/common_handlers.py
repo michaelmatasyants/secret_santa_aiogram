@@ -5,12 +5,8 @@ from aiogram import Bot, F, Router
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup, default_state
-from aiogram.types import (
-    CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    Message,
-)
+from aiogram.types import (CallbackQuery, InlineKeyboardButton,
+                           InlineKeyboardMarkup, Message)
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from santa_bot.bot.functions import message_send_photo
@@ -70,10 +66,11 @@ async def start_command(message: Message, state: FSMContext):
             await message.answer("Вы уже зарегистрированы на эту игру")
             return
         text_message = LEXICON['game'].format(
-            game.name,
-            game.start_date,
-            game.end_date,
-            game.description)
+                         game.name,
+                         game.start_date,
+                         game.end_date,
+                         game.description
+        )
         await message.answer(text=text_message)
         await asyncio.sleep(1)
         await message.answer(text=LEXICON['user_name'])

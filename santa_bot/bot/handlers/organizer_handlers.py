@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 from aiogram import Bot, F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
@@ -5,14 +8,18 @@ from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import (CallbackQuery, InlineKeyboardButton,
                            InlineKeyboardMarkup, LabeledPrice, Message,
-                           PreCheckoutQuery)
+                           PreCheckoutQuery, FSInputFile)
 from aiogram.utils.deep_linking import create_start_link
 from django.conf import settings
 from django.db.models import Count
 
+from santa_bot.bot.functions import message_send_photo
 from santa_bot.bot.keyboards import get_group_kb, price_kb
 from santa_bot.bot.LEXICON import LEXICON
 from santa_bot.models import Game, Organizer
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
 storage = MemoryStorage()
 router = Router()
@@ -80,8 +87,10 @@ async def get_description_group(message: Message, state: FSMContext):
 
 @router.message(StateFilter(FSMFillForm.group_description))
 async def get_game_date(message: Message, state: FSMContext):
+    current_state = await state.set_state()
     await state.update_data(group_description=message.text)
-    # картинка с салютом
+
+    await message_send_photo(message, 'firework.jpg')
     await message.answer(text=LEXICON['santa_selection_date'])
     await state.set_state(FSMFillForm.game_date)
 
@@ -102,7 +111,7 @@ async def get_price(message: Message, state: FSMContext):
     # картинка подарка с бантом
     await state.update_data(choose_date=message.text)
     message_text = "Выбери стоимость подарка"
-
+    await message_send_photo(message, 'present2.jpg')
     await message.answer(message_text, reply_markup=price_kb())
     await state.set_state(FSMFillForm.get_link)
 
@@ -137,6 +146,7 @@ async def admin_group_info(message: Message, state: FSMContext):
     groups = Game.objects.filter(organizer__telegram_id=message.from_user.id)
     # картинка с управлением группами (менеджмент или что-то похожее)
     text_message = LEXICON['your_groups']
+    await message_send_photo(message, 'anta-manager.jpg')
     await message.answer(text=text_message, reply_markup=get_group_kb(groups))
     await state.set_state(FSMAdminForm.group_information)
 
@@ -166,6 +176,7 @@ async def get_payment(message: Message, state: FSMContext):
         [InlineKeyboardButton(text='Задонатить 100 руб.',
                               callback_data='payment')]
     ]
+    await message_send_photo(message, 'Scrooge.jpg')
     await message.answer(
         text=text_message,
         reply_markup=InlineKeyboardMarkup(inline_keyboard=kb)

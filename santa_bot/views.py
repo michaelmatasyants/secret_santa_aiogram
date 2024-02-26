@@ -1,11 +1,10 @@
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
-from santa_bot.models import Game, Player
+from santa_bot.models import Game, Player, Image
 import random
 
 
 def allocation(request, game_id):
-
     game = get_object_or_404(Game, pk=game_id)
 
     players = game.players.all()
@@ -15,7 +14,8 @@ def allocation(request, game_id):
     for player in players:
         avoided_players = player.avoided_players.all()
 
-        can_giftee = players.exclude(telegram_id=player.telegram_id).exclude(telegram_id__in=avoided_players).exclude(telegram_id__in=giftees)
+        can_giftee = players.exclude(telegram_id=player.telegram_id).exclude(telegram_id__in=avoided_players).exclude(
+            telegram_id__in=giftees)
 
         if can_giftee:
             transferee = random.choice(can_giftee)
@@ -35,7 +35,6 @@ def allocation(request, game_id):
 
 
 def del_allocation(request, game_id):
-
     game = get_object_or_404(Game, pk=game_id)
 
     players = game.players.all()
@@ -51,7 +50,6 @@ def del_allocation(request, game_id):
 
 
 def show_start(request, telegram_id):
-
     player = get_object_or_404(Player, telegram_id=telegram_id)
 
     context = {
@@ -60,3 +58,8 @@ def show_start(request, telegram_id):
     }
 
     return render(request, 'index.html', context)
+
+
+def view_image(request, name):
+    image = get_object_or_404(Image, title=name)
+    return render(request, 'image_detail.html', {'image': image})
